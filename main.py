@@ -15,7 +15,7 @@ def extract_features(audio_path):
     chroma = np.mean(librosa.feature.chroma_stft(S=stft, sr=sr).T,axis=0)
     mel = np.mean(librosa.feature.melspectrogram(y=y, sr=sr).T,axis=0)
     contrast = np.mean(librosa.feature.spectral_contrast(S=stft, sr=sr,fmin=0.5*sr* 2**(-6)).T,axis=0)
-    #tonnetz = np.mean(librosa.feature.tonnetz(y=librosa.effects.harmonic(y),sr=sr*2).T,axis=0)
+    tonnetz = np.mean(librosa.feature.tonnetz(y=librosa.effects.harmonic(y),sr=sr*2).T,axis=0)
     features = np.hstack([mfccs,chroma,mel,contrast])
 
     return np.array(features)
