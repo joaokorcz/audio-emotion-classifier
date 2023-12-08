@@ -3,9 +3,11 @@ import librosa
 import numpy as np
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
+from sklearn.metrics import accuracy_score, classification_report
 from sklearn.svm import SVC
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import accuracy_score, classification_report
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.neural_network import MLPClassifier
 
 def extract_features(audio_path):
     y, sr = librosa.load(audio_path, sr=None)
@@ -15,23 +17,22 @@ def extract_features(audio_path):
     chroma = np.mean(librosa.feature.chroma_stft(S=stft, sr=sr).T,axis=0)
     mel = np.mean(librosa.feature.melspectrogram(y=y, sr=sr).T,axis=0)
     contrast = np.mean(librosa.feature.spectral_contrast(S=stft, sr=sr,fmin=0.5*sr* 2**(-6)).T,axis=0)
-    tonnetz = np.mean(librosa.feature.tonnetz(y=librosa.effects.harmonic(y),sr=sr*2).T,axis=0)
-    features = np.hstack([mfccs,chroma,mel,contrast])
+    #tonnetz = np.mean(librosa.feature.tonnetz(y=librosa.effects.harmonic(y),sr=sr*2).T,axis=0)
+    features = np.hstack([mfccs, chroma, mel, contrast])
 
-    return np.array(features)
+    return features
 
 def load_data(root_directory):
     features, labels = [], []
 
-    emotions = ['anger', 'disgust', 'fear', 'happy', 'neutral', 'sad']
+    #emotions = ['anger', 'disgust', 'fear', 'happy', 'neutral', 'sad']
+    emotions = ['sad', 'happy']
 
     for emotion in emotions:
         qt = 0
         emotion_dir = os.path.join(root_directory, emotion)
         for filename in os.listdir(emotion_dir):
             qt += 1
-            if qt == 100:
-                break
             print(emotion, qt)
             if filename.endswith(".wav"):
                 audio_path = os.path.join(emotion_dir, filename)
@@ -58,25 +59,52 @@ X_test = scaler.transform(X_test)
 model = SVC(kernel='linear', C=1)
 model.fit(X_train, y_train)
 
+# Inicializando e treinando o modelo RandomForest
 model_rf = RandomForestClassifier(n_estimators=100, random_state=42)
 model_rf.fit(X_train, y_train)
+
+# Inicializando e treinando o modelo k-Nearest Neighbors (KNN)
+model_knn = KNeighborsClassifier(n_neighbors=5)
+model_knn.fit(X_train, y_train)
+
+# Inicializando e treinando o modelo MLP
+model_mlp = MLPClassifier(hidden_layer_sizes=(100, 100), max_iter=1000, random_state=42)
+model_mlp.fit(X_train, y_train)
 
 # Fazendo previsões
 predictions = model.predict(X_test)
 
 predictions_rf = model_rf.predict(X_test)
 
+predictions_knn = model_knn.predict(X_test)
+
+predictions_mlp = model_mlp.predict(X_test)
+
 # Avaliando o desempenho
 accuracy = accuracy_score(y_test, predictions)
 report = classification_report(y_test, predictions)
 
-print(f"Acurácia: {accuracy}")
-print("Relatório de Classificação:")
+print(f"Acurácia SVM: {accuracy}")
+print("Relatório de Classificação SVM:")
 print(report)
 
 accuracy_rf = accuracy_score(y_test, predictions_rf)
 report_rf = classification_report(y_test, predictions_rf)
 
-print(f"Acurácia: {accuracy_rf}")
-print("Relatório de Classificação:")
+print(f"Acurácia RF: {accuracy_rf}")
+print("Relatório de Classificação RF:")
 print(report_rf)
+
+accuracy_knn = accuracy_score(y_test, predictions_knn)
+report_knn = classification_report(y_test, predictions_knn)
+
+print(f"Acurácia KNN: {accuracy_knn}")
+print("Relatório de Classificação KNN:")
+print(report_knn)
+
+accuracy_mlp = accuracy_score(y_test, predictions_mlp)
+report_mlp = classification_report(y_test, predictions_mlp)
+
+print(f"Acurácia MLP: {accuracy_mlp}")
+print("Relatório de Classificação MLP:")
+print(report_mlp)
